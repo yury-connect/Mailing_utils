@@ -1,3 +1,19 @@
+server:
+  port: 54321
+  shutdown: graceful # Включаем плавную остановку
+
 spring:
   application:
     name: mailing-utils
+  lifecycle:
+    timeout-per-shutdown-phase: 10s # Даем 10 секунд на завершение текущих задач
+
+# Включаем и открываем эндпоинт остановки
+management:
+  endpoint:
+    shutdown:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: shutdown
