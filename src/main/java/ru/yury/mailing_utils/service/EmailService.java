@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import ru.yury.mailing_utils.exception.InvalidEmailDataException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -16,26 +17,10 @@ import java.util.stream.Collectors;
 @Service
 public class EmailService {
 
-    // Используем регулярку с \b для точного поиска границ слова
-//    private static final Pattern EMAIL_PATTERN = Pattern.compile(
-//            "\\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}\\b",
-//            Pattern.CASE_INSENSITIVE
-//    );
-
+    // Используем регулярку с \b для точного поиска границ слова. Разрешаем любые буквы Unicode (\p{L}) в имени и домене
     private static final Pattern EMAIL_PATTERN = Pattern.compile(
-            // 1. Начало (исключаем точки в начале)
-            "(?<![\\w.-])" +
-                    // 2. Имя (буквы, цифры, спецсимволы, без точек в начале и в конце)
-                    "[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_`{|}~-]+)*" +
-                    // 3. Собака
-                    "@" +
-                    // 4. Домен (без точек и дефисов в начале/конце)
-                    "(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)+" +
-                    // 5. Доменная зона (минимум 2 буквы, максимум сколько угодно)
-                    "[a-zA-Z]{2,}" +
-                    // 6. Конец (исключаем захват точек и дефисов в конце)
-                    "(?![\\w.-])",
-            Pattern.CASE_INSENSITIVE
+            "\\b[\\p{L}0-9._%+-]+@[\\p{L}0-9.-]+\\.[\\p{L}]{2,}\\b",
+            Pattern.CASE_INSENSITIVE | Pattern.UNICODE_CHARACTER_CLASS
     );
 
 
@@ -67,13 +52,8 @@ public class EmailService {
         log.debug("Запуск filterEmailsByName. Длина текста: {}", rawText != null ? rawText.length() : 0);
         validate(rawText);
 
-        // 1. Принудительно чиним кодировку
         String utf8Text = forceUtf8(rawText);
-
-        // 2. Убираем мусор
         String cleanText = sanitizeText(utf8Text);
-
-        // 3. Ищем email
         Matcher matcher = EMAIL_PATTERN.matcher(cleanText);
 
         Set<String> uniqueEmails = matcher.results()
@@ -91,13 +71,8 @@ public class EmailService {
         log.debug("Запуск filterEmailsByDomainAndName. Длина текста: {}", rawText != null ? rawText.length() : 0);
         validate(rawText);
 
-        // 1. Принудительно чиним кодировку
         String utf8Text = forceUtf8(rawText);
-
-        // 2. Убираем мусор
         String cleanText = sanitizeText(utf8Text);
-
-        // 3. Ищем email
         Matcher matcher = EMAIL_PATTERN.matcher(cleanText);
 
         List<String> result = matcher.results()
@@ -130,14 +105,14 @@ public class EmailService {
     }
 
     /**
-     * Очищает текст от HTML-тегов и мусорных символов, заменяя их на пробелы.
+     * Очищает текст от HTML-тегов и мусорных символов, заменяя их на пробелы. Не стирает кириллицу
      * Оставляет только буквы, цифры, точки, дефисы, подчеркивания, плюсы и собаку.
      */
     private String sanitizeText(String rawText) {
         if (rawText == null) return "";
 
         // Оставляем только разрешенные символы, все остальные заменяем на пробел
-        String cleaned = rawText.replaceAll("[^a-zA-Z0-9@._%+\\-\\s]", " ");
+        String cleaned = rawText.replaceAll("[^\\p{L}\\p{N}@._%+\\-\\s]", " ");
 
         // Убираем множественные пробелы (опционально, для красоты)
         return cleaned.replaceAll("\\s+", " ").trim();
@@ -151,8 +126,8 @@ public class EmailService {
         if (text == null) return "";
         try {
             // Берем байты строки в UTF-8 и создаем из них новую строку
-            byte[] bytes = text.getBytes(java.nio.charset.StandardCharsets.UTF_8);
-            return new String(bytes, java.nio.charset.StandardCharsets.UTF_8);
+            byte[] bytes = text.getBytes(StandardCharsets.UTF_8);
+            return new String(bytes, StandardCharsets.UTF_8);
         } catch (Exception e) {
             log.warn("Ошибка при конвертации в UTF-8", e);
             return text; // Если что-то пошло не так, возвращаем как есть
