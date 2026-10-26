@@ -1,3 +1,29 @@
+server:
+  port: 54321
+  shutdown: graceful # Включаем плавную остановку
+
 spring:
   application:
     name: mailing-utils
+  lifecycle:
+    timeout-per-shutdown-phase: 10s # Даем 10 секунд на завершение текущих задач
+
+logging:
+  level:
+    root: INFO
+    ru.yury.mailing_utils: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss} %-5level [%thread] %logger{36} - %msg%n"
+  file:
+    name: logs/mailing-utils.log
+
+# Включаем и открываем эндпоинт остановки
+management:
+  endpoint:
+    shutdown:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: shutdown

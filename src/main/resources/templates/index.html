@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+    <head>
+        <meta charset="UTF-8">
+        <title>Mailing Utils</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 40px; }
+            ul { list-style-type: none; padding: 0; }
+            li { margin-bottom: 15px; }
+            a { text-decoration: none; color: #007bff; font-size: 18px; }
+            a:hover { text-decoration: underline; }
+
+            .stop-btn {
+                background-color: #dc3545; color: white; border: none;
+                padding: 10px 20px; font-size: 16px; border-radius: 4px;
+                cursor: pointer; margin-top: 30px;
+            }
+            .stop-btn:hover { background-color: #c82333; }
+        </style>
+    </head>
+
+    <body>
+        <h2>Mailing Utils - Главная</h2>
+        <ul>
+            <li><a href="/tools/email-filter">→ Фильтрация Email</a></li>
+        </ul>
+
+        <!-- Кнопка остановки (завершение приложения) -->
+        <button class="stop-btn" onclick="stopApp()">🛑 Остановить приложение (освободить порт)</button>
+
+        <!-- Подвал со ссылкой на автора -->
+        <div style="margin-top: 50px; padding-top: 20px; border-top: 1px solid #eee; font-size: 14px; color: #666;">
+            <a href="/about" style="color: #666; text-decoration: none;">О проекте и авторе</a> |
+            Сделано с ❤️ Юрием
+        </div>
+
+        <script>
+            function stopApp() {
+                if (!confirm('Вы уверены, что хотите остановить приложение? Порт 54321 будет освобожден.')) {
+                    return;
+                }
+
+                fetch('/actuator/shutdown', { method: 'POST' })
+                    .then(response => {
+                        if (response.ok) {
+                            document.body.innerHTML = '<h2 style="color: red; text-align: center; margin-top: 100px;">Приложение успешно остановлено. Порт свободен. Можно закрыть страницу.</h2>';
+                        } else {
+                            alert('Не удалось остановить приложение. Проверьте, включен ли эндпоинт shutdown.');
+                        }
+                    })
+                    .catch(error => {
+                        // Если fetch упал с ошибкой сети, значит процесс уже завершился и соединение оборвалось
+                        document.body.innerHTML = '<h2 style="color: red; text-align: center; margin-top: 100px;">Приложение остановлено (соединение прервано).</h2>';
+                    });
+            }
+        </script>
+    </body>
+</html>
