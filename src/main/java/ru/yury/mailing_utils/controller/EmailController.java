@@ -4,13 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import ru.yury.mailing_utils.constant.ApiConstants;
 import ru.yury.mailing_utils.service.EmailService;
 
 import java.util.List;
 
 @Slf4j
 @Controller
-@RequestMapping("/tools/email-filter") // Базовый путь для всего контроллера
+@RequestMapping(ApiConstants.EMAIL_TOOLS_BASE) // Базовый путь из константы
 public class EmailController {
 
     private final EmailService emailService;
@@ -26,7 +27,7 @@ public class EmailController {
     }
 
     // Обработка кнопки "Без фильтрации"
-    @PostMapping("/without")
+    @PostMapping(ApiConstants.EMAIL_WITHOUT_FILTER)
     public String withoutFilteringEmails(
             @RequestParam(value = "emails", required = false) String emails,
             Model model) {
@@ -42,7 +43,7 @@ public class EmailController {
     }
 
     // Обработка кнопки "Фильтр по имени"
-    @PostMapping("/name")
+    @PostMapping(ApiConstants.EMAIL_FILTER_BY_NAME)
     public String filterByName(
             @RequestParam(value = "emails", required = false) String emails,
             Model model) {
@@ -58,7 +59,7 @@ public class EmailController {
     }
 
     // Обработка кнопки "Фильтр по домену и имени"
-    @PostMapping("/domain-and-name")
+    @PostMapping(ApiConstants.EMAIL_FILTER_BY_DOMAIN_AND_NAME)
     public String filterByDomainAndName(
             @RequestParam(value = "emails", required = false) String emails,
             Model model) {
