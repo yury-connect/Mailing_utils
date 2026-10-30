@@ -25,6 +25,10 @@
                 <label for="emails">Вставьте email-адреса:</label><br>
                 <textarea id="emails" name="emails" th:text="${rawEmails}"></textarea>
 
+                <!-- Поле для исключаемых адресов -->
+                <label for="excludeEmails">Исключить адреса (по одному в строке или через запятую/пробел):</label><br>
+                <textarea id="excludeEmails" name="excludeEmails" style="height: 80px;" th:text="${excludeEmails}"></textarea>
+
                 <!-- Три кнопки в один ряд -->
                 <div style="margin-bottom: 10px;">
                     <button type="submit" formaction="/tools/email-filter/without">Без фильтрации</button>

@@ -25,7 +25,13 @@ public class EmailService {
 
 
     public List<String> withoutFilteringEmails(String rawText) {
-        log.debug("Запуск withoutFilteringEmails. Длина текста: {}", rawText != null ? rawText.length() : 0);
+        return withoutFilteringEmails(rawText, null);
+    }
+
+    public List<String> withoutFilteringEmails(String rawText, String excludeEmails) {
+        log.debug("Запуск withoutFilteringEmails. Длина текста: {}, исключений: {}",
+                rawText != null ? rawText.length() : 0,
+                excludeEmails != null ? excludeEmails.length() : 0);
         validate(rawText);
 
         // 1. Принудительно чиним кодировку
@@ -37,46 +43,67 @@ public class EmailService {
         // 3. Ищем email
         Matcher matcher = EMAIL_PATTERN.matcher(cleanText);
 
+        Set<String> excludeSet = parseExcludeEmails(excludeEmails);
+
         LinkedHashSet<String> uniqueEmails = matcher.results()
                 .map(match -> match.group().toLowerCase().trim())
+                .filter(email -> !excludeSet.contains(email))
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
         List<String> result = new ArrayList<>(uniqueEmails);
-        log.info("Метод withoutFilteringEmails завершен. Найдено уникальных email: {}", result.size());
-
+        log.info("Метод withoutFilteringEmails завершен. Найдено уникальных email: {} (исключено: {})", result.size(), excludeSet.size());
         return result;
     }
 
 
     public List<String> filterEmailsByName(String rawText) {
-        log.debug("Запуск filterEmailsByName. Длина текста: {}", rawText != null ? rawText.length() : 0);
+        return filterEmailsByName(rawText, null);
+    }
+
+    public List<String> filterEmailsByName(String rawText, String excludeEmails) {
+        log.debug("Запуск filterEmailsByName. Длина текста: {}, исключений: {}",
+                rawText != null ? rawText.length() : 0,
+                excludeEmails != null ? excludeEmails.length() : 0);
         validate(rawText);
 
         String utf8Text = forceUtf8(rawText);
         String cleanText = sanitizeText(utf8Text);
         Matcher matcher = EMAIL_PATTERN.matcher(cleanText);
 
-        Set<String> uniqueEmails = matcher.results()
+        Set<String> excludeSet = parseExcludeEmails(excludeEmails);
+
+        List<String> result = matcher.results()
                 .map(match -> match.group().toLowerCase().trim())
-                .collect(Collectors.toSet());
+                .filter(email -> !excludeSet.contains(email))
+                .distinct()
+                .sorted(String::compareTo)
+                .toList();
 
-        List<String> result = uniqueEmails.stream().sorted(String::compareTo).toList();
-        log.info("Метод filterEmailsByName завершен. Найдено email: {}", result.size());
-
+        log.info("Метод filterEmailsByName завершен. Найдено email: {} (исключено: {})",
+                result.size(), excludeSet.size());
         return result;
     }
 
 
     public List<String> filterEmailsByDomainAndName(String rawText) {
-        log.debug("Запуск filterEmailsByDomainAndName. Длина текста: {}", rawText != null ? rawText.length() : 0);
+        return filterEmailsByDomainAndName(rawText, null);
+    }
+
+    public List<String> filterEmailsByDomainAndName(String rawText, String excludeEmails) {
+        log.debug("Запуск filterEmailsByDomainAndName. Длина текста: {}, исключений: {}",
+                rawText != null ? rawText.length() : 0,
+                excludeEmails != null ? excludeEmails.length() : 0);
         validate(rawText);
 
         String utf8Text = forceUtf8(rawText);
         String cleanText = sanitizeText(utf8Text);
         Matcher matcher = EMAIL_PATTERN.matcher(cleanText);
 
+        Set<String> excludeSet = parseExcludeEmails(excludeEmails);
+
         List<String> result = matcher.results()
                 .map(match -> match.group().toLowerCase().trim())
+                .filter(email -> !excludeSet.contains(email))
                 .distinct()
                 .sorted((email1, email2) -> {
                     String[] parts1 = email1.split("@", 2);
@@ -90,7 +117,8 @@ public class EmailService {
                 })
                 .toList();
 
-        log.info("Метод filterEmailsByDomainAndName завершен. Найдено email: {}", result.size());
+        log.info("Метод filterEmailsByDomainAndName завершен. Найдено email: {} (исключено: {})",
+                result.size(), excludeSet.size());
         return result;
     }
 
@@ -132,5 +160,21 @@ public class EmailService {
             log.warn("Ошибка при конвертации в UTF-8", e);
             return text; // Если что-то пошло не так, возвращаем как есть
         }
+    }
+
+    /**
+     * Парсит строку исключаемых email-адресов в Set (lowercase).
+     * Разделители: перевод строки, запятая, точка с запятой, пробел.
+     */
+    private Set<String> parseExcludeEmails(String excludeEmails) {
+        if (excludeEmails == null || excludeEmails.isBlank()) {
+            return Set.of();
+        }
+        return Pattern.compile("[\\s,;]+")
+                .splitAsStream(excludeEmails)
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .filter(s -> !s.isEmpty())
+                .collect(Collectors.toSet());
     }
 }
