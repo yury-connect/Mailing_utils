@@ -5,6 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import ru.yury.mailing_utils.constant.ApiConstants;
+import ru.yury.mailing_utils.enums.OutputType;
 import ru.yury.mailing_utils.service.EmailService;
 
 import java.util.List;
@@ -34,16 +35,26 @@ public class EmailController {
     public String withoutFilteringEmails(
             @RequestParam(value = "emails", required = false) String emails,
             @RequestParam(value = "excludeEmails", required = false) String excludeEmails,
+            @RequestParam(value = "outputMode", required = false) String outputMode,
             Model model) {
 
-        log.info("Запрос: 'Без фильтрации'. Длина входящего текста: {}", emails != null ? emails.length() : 0);
+        OutputType type = OutputType.fromCode(outputMode);
+
+        log.info("Запрос: 'Фильтр по домену и имени'. Входной текст: {} символов, исключения: {} символов, режим вывода: {}",
+                emails != null ? emails.length() : 0,
+                excludeEmails != null ? excludeEmails.length() : 0,
+                type.getCode());
 
         model.addAttribute("rawEmails", emails);
         model.addAttribute("excludeEmails", excludeEmails);
+        model.addAttribute("outputMode", type.getCode());
         List<String> filtered = emailService.withoutFilteringEmails(emails, excludeEmails);
+        model.addAttribute("itemsFound", filtered.size());
 
         log.info("Найдено уникальных email (без фильтрации): {}", filtered.size());
-        model.addAttribute("filteredEmails", filtered);
+
+        List<String> formedList = emailService.applyOutputFormatting(filtered, type);
+        model.addAttribute("filteredEmails", formedList);
         return "email_filter";
     }
 
@@ -53,16 +64,26 @@ public class EmailController {
     public String filterByName(
             @RequestParam(value = "emails", required = false) String emails,
             @RequestParam(value = "excludeEmails", required = false) String excludeEmails,
+            @RequestParam(value = "outputMode", required = false) String outputMode,
             Model model) {
 
-        log.info("Запрос: 'Фильтр по имени'. Длина входящего текста: {}", emails != null ? emails.length() : 0);
+        OutputType type = OutputType.fromCode(outputMode);
+
+        log.info("Запрос: 'Фильтр по домену и имени'. Входной текст: {} символов, исключения: {} символов, режим вывода: {}",
+                emails != null ? emails.length() : 0,
+                excludeEmails != null ? excludeEmails.length() : 0,
+                type.getCode());
 
         model.addAttribute("rawEmails", emails);
         model.addAttribute("excludeEmails", excludeEmails);
+        model.addAttribute("outputMode", type.getCode());
         List<String> filtered = emailService.filterEmailsByName(emails, excludeEmails);
+        model.addAttribute("itemsFound", filtered.size());
 
         log.info("Найдено email (фильтр по имени): {}", filtered.size());
-        model.addAttribute("filteredEmails", filtered);
+
+        List<String> formedList = emailService.applyOutputFormatting(filtered, type);
+        model.addAttribute("filteredEmails", formedList);
         return "email_filter";
     }
 
@@ -72,16 +93,26 @@ public class EmailController {
     public String filterByDomainAndName(
             @RequestParam(value = "emails", required = false) String emails,
             @RequestParam(value = "excludeEmails", required = false) String excludeEmails,
+            @RequestParam(value = "outputMode", required = false) String outputMode,
             Model model) {
 
-        log.info("Запрос: 'Фильтр по домену и имени'. Длина входящего текста: {}", emails != null ? emails.length() : 0);
+        OutputType type = OutputType.fromCode(outputMode);
+
+        log.info("Запрос: 'Фильтр по домену и имени'. Входной текст: {} символов, исключения: {} символов, режим вывода: {}",
+                emails != null ? emails.length() : 0,
+                excludeEmails != null ? excludeEmails.length() : 0,
+                type.getCode());
 
         model.addAttribute("rawEmails", emails);
         model.addAttribute("excludeEmails", excludeEmails);
+        model.addAttribute("outputMode", type.getCode());
         List<String> filtered = emailService.filterEmailsByDomainAndName(emails, excludeEmails);
+        model.addAttribute("itemsFound", filtered.size());
 
         log.info("Найдено email (фильтр по домену и имени): {}", filtered.size());
-        model.addAttribute("filteredEmails", filtered);
+
+        List<String> formedList = emailService.applyOutputFormatting(filtered, type);
+        model.addAttribute("filteredEmails", formedList);
         return "email_filter";
     }
 }

@@ -2,6 +2,7 @@ package ru.yury.mailing_utils.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import ru.yury.mailing_utils.enums.OutputType;
 import ru.yury.mailing_utils.exception.InvalidEmailDataException;
 
 import java.nio.charset.StandardCharsets;
@@ -24,9 +25,9 @@ public class EmailService {
     );
 
 
-    public List<String> withoutFilteringEmails(String rawText) {
-        return withoutFilteringEmails(rawText, null);
-    }
+//    public List<String> withoutFilteringEmails(String rawText) {
+//        return withoutFilteringEmails(rawText, null);
+//    }
 
     public List<String> withoutFilteringEmails(String rawText, String excludeEmails) {
         log.debug("Запуск withoutFilteringEmails. Длина текста: {}, исключений: {}",
@@ -51,14 +52,14 @@ public class EmailService {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
         List<String> result = new ArrayList<>(uniqueEmails);
-        log.info("Метод withoutFilteringEmails завершен. Найдено уникальных email: {} (исключено: {})", result.size(), excludeSet.size());
+        log.info("Метод withoutFilteringEmails завершен. Найдено уникальных email: {} (в списке исключений: {})", result.size(), excludeSet.size());
         return result;
     }
 
 
-    public List<String> filterEmailsByName(String rawText) {
-        return filterEmailsByName(rawText, null);
-    }
+//    public List<String> filterEmailsByName(String rawText) {
+//        return filterEmailsByName(rawText, null);
+//    }
 
     public List<String> filterEmailsByName(String rawText, String excludeEmails) {
         log.debug("Запуск filterEmailsByName. Длина текста: {}, исключений: {}",
@@ -79,15 +80,15 @@ public class EmailService {
                 .sorted(String::compareTo)
                 .toList();
 
-        log.info("Метод filterEmailsByName завершен. Найдено email: {} (исключено: {})",
+        log.info("Метод filterEmailsByName завершен. Найдено email: {} (в списке исключений: {})",
                 result.size(), excludeSet.size());
         return result;
     }
 
 
-    public List<String> filterEmailsByDomainAndName(String rawText) {
-        return filterEmailsByDomainAndName(rawText, null);
-    }
+//    public List<String> filterEmailsByDomainAndName(String rawText) {
+//        return filterEmailsByDomainAndName(rawText, null);
+//    }
 
     public List<String> filterEmailsByDomainAndName(String rawText, String excludeEmails) {
         log.debug("Запуск filterEmailsByDomainAndName. Длина текста: {}, исключений: {}",
@@ -117,7 +118,7 @@ public class EmailService {
                 })
                 .toList();
 
-        log.info("Метод filterEmailsByDomainAndName завершен. Найдено email: {} (исключено: {})",
+        log.info("Метод filterEmailsByDomainAndName завершен. Найдено email: {} (в списке исключений: {})",
                 result.size(), excludeSet.size());
         return result;
     }
@@ -176,5 +177,81 @@ public class EmailService {
                 .map(String::toLowerCase)
                 .filter(s -> !s.isEmpty())
                 .collect(Collectors.toSet());
+    }
+
+
+
+    /**
+     * Применяет форматирование к списку email-адресов согласно выбранному режиму.
+     * Возвращает новый список, в который вставлены пустые строки ("") как разделители.
+     * Пустые строки НЕ добавляются после последнего элемента.
+     */
+    public List<String> applyOutputFormatting(List<String> emails, OutputType type) {
+        if (emails == null || emails.isEmpty()) {
+            return emails == null ? List.of() : emails;
+        }
+        OutputType mode = (type != null) ? type : OutputType.DEFAULT;
+
+        List<String> result = new ArrayList<>();
+        int size = emails.size();
+
+        switch (mode) {
+            case PLAIN -> {
+                result.addAll(emails);
+            }
+            case BLOCKS_10 -> {
+                for (int i = 0; i < size; i++) {
+                    result.add(emails.get(i));
+                    boolean isLast = (i == size - 1);
+                    if (!isLast && (i + 1) % 10 == 0) {
+                        result.add("");
+                    }
+                }
+            }
+            case BLOCKS_10_50_100 -> {
+                for (int i = 0; i < size; i++) {
+                    result.add(emails.get(i));
+                    boolean isLast = (i == size - 1);
+                    if (isLast) {
+                        break;
+                    }
+                    int pos = i + 1; // номер элемента, считая с 1
+                    if (pos % 100 == 0) {
+                        addEmpty(result, 10);
+                    } else if (pos % 50 == 0) {
+                        addEmpty(result, 3);
+                    } else if (pos % 10 == 0) {
+                        addEmpty(result, 1);
+                    }
+                }
+            }
+            case BY_DOMAINS -> {
+                String prevDomain = null;
+                for (int i = 0; i < size; i++) {
+                    String email = emails.get(i);
+                    String domain = extractDomain(email);
+                    if (i > 0 && !domain.equals(prevDomain)) {
+                        result.add("");
+                    }
+                    result.add(email);
+                    prevDomain = domain;
+                }
+            }
+        }
+
+        log.debug("applyOutputFormatting: режим {}, исходно {} email, после форматирования {} строк",
+                mode.getCode(), size, result.size());
+        return result;
+    }
+
+    private void addEmpty(List<String> list, int count) {
+        for (int k = 0; k < count; k++) {
+            list.add("");
+        }
+    }
+
+    private String extractDomain(String email) {
+        int at = email.lastIndexOf('@');
+        return (at >= 0 && at < email.length() - 1) ? email.substring(at + 1) : "";
     }
 }
