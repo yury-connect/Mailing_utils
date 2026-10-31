@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Парсинг Telegram-профилей</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 600px; }
+        textarea { width: 100%; height: 150px; margin-bottom: 10px; }
+        .result { background-color: #f4f4f4; padding: 15px; border: 1px solid #ccc; margin-top: 20px; }
+        .error { color: red; }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <a href="/" class="back-btn">← На главную</a>
+
+    <h2>Парсинг Telegram-профилей</h2>
+    <h4>Из переданного текста вытаскивает username'ы Telegram<br>
+        (<code>@username</code>, <code>t.me/username</code>, <code>telegram.me/username</code>)<br>
+        и приводит их к виду <code>@username</code></h4>
+
+    <form action="/tools/telegram-filter/parse" method="POST">
+        <label for="text">Вставьте текст:</label><br>
+        <textarea id="text" name="text" th:text="${rawText}"></textarea>
+
+        <label for="excludeItems">Исключить (<i>по одному в строке или через запятую/пробел</i>):</label><br>
+        <textarea id="excludeItems" name="excludeItems" style="height: 80px;" th:text="${excludeItems}"></textarea>
+
+        <fieldset style="margin-bottom: 10px;">
+            <legend>Вид вывода:</legend>
+            <label>
+                <input type="radio" name="outputMode" value="plain"
+                       th:checked="${outputMode == 'plain'}">
+                Без разделения.
+            </label><br>
+            <label>
+                <input type="radio" name="outputMode" value="blocks10"
+                       th:checked="${outputMode == null or outputMode == 'blocks10'}">
+                Блоки по 10 шт.
+            </label><br>
+            <label>
+                <input type="radio" name="outputMode" value="blocks10_50_100"
+                       th:checked="${outputMode == 'blocks10_50_100'}">
+                Блоки по 10 шт.; каждые 50 → 3 пропуска, каждые 100 → 10 пропусков.
+            </label><br>
+            <label>
+                <input type="radio" name="outputMode" value="byFirstLetter"
+                       th:checked="${outputMode == 'byFirstLetter'}">
+                Группировать по первой букве username.
+            </label>
+        </fieldset>
+
+        <div style="margin-bottom: 10px;">
+            <button type="submit">Парсить</button>
+            <button type="button" onclick="document.getElementById('text').value = '';">Очистить</button>
+        </div>
+    </form>
+
+    <div class="error" th:if="${error}" th:text="${error}"></div>
+
+    <div class="result" th:if="${itemsFound != null and itemsFound > 0}">
+        <p><strong>Найденные Telegram-профили <i>(<span th:text="${itemsFound}"></span> шт.)</i>:</strong></p>
+        <div style="font-family: monospace;">
+            <div th:each="line : ${foundItems}">
+                <th:block th:if="${!#strings.isEmpty(line)}" th:text="${line}"></th:block>
+                <th:block th:if="${#strings.isEmpty(line)}">&nbsp;</th:block>
+            </div>
+        </div>
+    </div>
+
+    <div class="result" th:if="${itemsFound != null and itemsFound == 0}">
+        Telegram-профилей не найдено.
+    </div>
+
+    <div style="margin-top: 40px; padding-top: 15px; border-top: 1px dashed #ccc; text-align: center; font-size: 14px;">
+        <a href="/about" style="color: #888; text-decoration: none;">О приложении и авторе</a>
+    </div>
+</div>
+</body>
+</html>

@@ -11,11 +11,18 @@ public abstract class ApiConstants {
     public static final String EMAIL_FILTER_BY_NAME = "/name";
     public static final String EMAIL_FILTER_BY_DOMAIN_AND_NAME = "/domain-and-name";
 
+    // Telegram
+    public static final String TELEGRAM_TOOLS_BASE = "/tools/telegram-filter";
+    public static final String TELEGRAM_PARSE = "/parse";
+
+    // Phone
+    public static final String PHONE_TOOLS_BASE = "/tools/phone-filter";
+    public static final String PHONE_PARSE = "/parse";
+
     // Для управления приложением (Actuator)
     public static final String ACTUATOR_SHUTDOWN = "/actuator/shutdown";
 
     // Приватный конструктор, чтобы никто случайно не создал экземпляр абстрактного класса с константами
     private ApiConstants() {
     }
-
 }

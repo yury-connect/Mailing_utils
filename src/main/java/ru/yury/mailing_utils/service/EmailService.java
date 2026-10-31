@@ -2,7 +2,7 @@ package ru.yury.mailing_utils.service;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import ru.yury.mailing_utils.enums.OutputType;
+import ru.yury.mailing_utils.enums.EmailOutputType;
 import ru.yury.mailing_utils.exception.InvalidEmailDataException;
 
 import java.nio.charset.StandardCharsets;
@@ -186,11 +186,11 @@ public class EmailService {
      * Возвращает новый список, в который вставлены пустые строки ("") как разделители.
      * Пустые строки НЕ добавляются после последнего элемента.
      */
-    public List<String> applyOutputFormatting(List<String> emails, OutputType type) {
+    public List<String> applyOutputFormatting(List<String> emails, EmailOutputType type) {
         if (emails == null || emails.isEmpty()) {
             return emails == null ? List.of() : emails;
         }
-        OutputType mode = (type != null) ? type : OutputType.DEFAULT;
+        EmailOutputType mode = (type != null) ? type : EmailOutputType.DEFAULT;
 
         List<String> result = new ArrayList<>();
         int size = emails.size();

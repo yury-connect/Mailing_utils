@@ -1,12 +1,20 @@
 server:
   port: 54321
   shutdown: graceful # Включаем плавную остановку
+  tomcat:
+    max-http-form-post-size: 50MB  # Лимит на размер обычной HTML-формы (textarea)
+    max-swallow-size: 50MB         # Не разрывать TCP-соединение при больших запросах
 
 spring:
   application:
     name: mailing-utils
   lifecycle:
     timeout-per-shutdown-phase: 10s # Даем 10 секунд на завершение текущих задач
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 50MB          # Максимальный размер одного загружаемого файла
+      max-request-size: 50MB       # Максимальный общий размер multipart-запроса
 
 logging:
   level:

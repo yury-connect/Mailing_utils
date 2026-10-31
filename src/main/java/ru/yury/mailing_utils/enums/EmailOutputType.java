@@ -9,7 +9,7 @@ import java.util.Arrays;
  * Код ({@link #getCode()}) совпадает со значением value в radio-кнопках формы (outputMode).
  */
 @Getter
-public enum OutputType {
+public enum EmailOutputType {
 
     /** Без разделения — просто список адресов подряд. */
     PLAIN("plain"),
@@ -26,17 +26,17 @@ public enum OutputType {
     /** Код режима — совпадает с value в HTML-форме. */
     private final String code;
 
-    OutputType(String code) {
+    EmailOutputType(String code) {
         this.code = code;
     }
 
     /** Режим по умолчанию, если ничего не передано. */
-    public static final OutputType DEFAULT = BLOCKS_10;
+    public static final EmailOutputType DEFAULT = BLOCKS_10;
 
     /**
      * Безопасный парсинг: возвращает {@link #DEFAULT}, если строка null/пустая/неизвестная.
      */
-    public static OutputType fromCode(String code) {
+    public static EmailOutputType fromCode(String code) {
         if (code == null || code.isBlank()) {
             return DEFAULT;
         }

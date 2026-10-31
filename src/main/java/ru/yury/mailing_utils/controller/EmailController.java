@@ -5,7 +5,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import ru.yury.mailing_utils.constant.ApiConstants;
-import ru.yury.mailing_utils.enums.OutputType;
+import ru.yury.mailing_utils.enums.EmailOutputType;
 import ru.yury.mailing_utils.service.EmailService;
 
 import java.util.List;
@@ -38,7 +38,7 @@ public class EmailController {
             @RequestParam(value = "outputMode", required = false) String outputMode,
             Model model) {
 
-        OutputType type = OutputType.fromCode(outputMode);
+        EmailOutputType type = EmailOutputType.fromCode(outputMode);
 
         log.info("Запрос: 'Фильтр по домену и имени'. Входной текст: {} символов, исключения: {} символов, режим вывода: {}",
                 emails != null ? emails.length() : 0,
@@ -67,7 +67,7 @@ public class EmailController {
             @RequestParam(value = "outputMode", required = false) String outputMode,
             Model model) {
 
-        OutputType type = OutputType.fromCode(outputMode);
+        EmailOutputType type = EmailOutputType.fromCode(outputMode);
 
         log.info("Запрос: 'Фильтр по домену и имени'. Входной текст: {} символов, исключения: {} символов, режим вывода: {}",
                 emails != null ? emails.length() : 0,
@@ -96,7 +96,7 @@ public class EmailController {
             @RequestParam(value = "outputMode", required = false) String outputMode,
             Model model) {
 
-        OutputType type = OutputType.fromCode(outputMode);
+        EmailOutputType type = EmailOutputType.fromCode(outputMode);
 
         log.info("Запрос: 'Фильтр по домену и имени'. Входной текст: {} символов, исключения: {} символов, режим вывода: {}",
                 emails != null ? emails.length() : 0,

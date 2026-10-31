@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Парсинг телефонов</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .container { max-width: 600px; }
+        textarea { width: 100%; height: 150px; margin-bottom: 10px; }
+        .result { background-color: #f4f4f4; padding: 15px; border: 1px solid #ccc; margin-top: 20px; }
+        .error { color: red; }
+    </style>
+</head>
+
+<body>
+<div class="container">
+    <a href="/" class="back-btn">← На главную</a>
+
+    <h2>Парсинг телефонных номеров</h2>
+    <h4>Из переданного текста вытаскивает телефоны<br>
+        (допустимые разделители: <code>-</code>, пробел, <code>(</code>, <code>)</code>, <code>.</code>)<br>
+        и приводит их к виду <code>+&lt;цифры&gt;</code>; РФ <code>8XXXXXXXXXX</code> → <code>+7XXXXXXXXXX</code></h4>
+
+    <form action="/tools/phone-filter/parse" method="POST" enctype="multipart/form-data">
+        <label for="text">Вставьте текст:</label><br>
+        <textarea id="text" name="text" th:text="${rawText}"></textarea>
+
+        <label for="file">Или загрузите файл (.txt):</label><br>
+        <input type="file" id="file" name="file" accept=".txt,text/plain" style="margin-bottom: 10px;"><br>
+
+        <label for="excludeItems">Исключить (<i>по одному в строке или через запятую/пробел</i>):</label><br>
+        <textarea id="excludeItems" name="excludeItems" style="height: 80px;" th:text="${excludeItems}"></textarea>
+
+        <fieldset style="margin-bottom: 10px;">
+            <legend>Вид вывода:</legend>
+            <label>
+                <input type="radio" name="outputMode" value="plain"
+                       th:checked="${outputMode == 'plain'}">
+                Без разделения.
+            </label><br>
+            <label>
+                <input type="radio" name="outputMode" value="blocks10"
+                       th:checked="${outputMode == null or outputMode == 'blocks10'}">
+                Блоки по 10 шт.
+            </label><br>
+            <label>
+                <input type="radio" name="outputMode" value="blocks10_50_100"
+                       th:checked="${outputMode == 'blocks10_50_100'}">
+                Блоки по 10 шт.; каждые 50 → 3 пропуска, каждые 100 → 10 пропусков.
+            </label><br>
+            <label>
+                <input type="radio" name="outputMode" value="byCountryCode"
+                       th:checked="${outputMode == 'byCountryCode'}">
+                Группировать по коду страны.
+            </label>
+        </fieldset>
+
+        <div style="margin-bottom: 10px;">
+            <button type="submit" formaction="/tools/phone-filter/parse-file">Загрузить из файла</button>
+            <button type="submit">Парсить</button>
+            <button type="button" onclick="document.getElementById('text').value = ''; document.getElementById('file').value = '';">Очистить</button>
+            <button type="button" onclick="copyResult()">Скопировать результат</button>
+        </div>
+    </form>
+
+    <div class="error" th:if="${error}" th:text="${error}"></div>
+
+    <div class="result" th:if="${itemsFound != null and itemsFound > 0}">
+        <p><strong>Найденные номера <i>(<span th:text="${itemsFound}"></span> шт.)</i>:</strong></p>
+        <div style="font-family: monospace;" id="result-block">
+            <div th:each="line : ${foundItems}">
+                <th:block th:if="${!#strings.isEmpty(line)}" th:text="${line}"></th:block>
+                <th:block th:if="${#strings.isEmpty(line)}">&nbsp;</th:block>
+            </div>
+        </div>
+    </div>
+
+    <div class="result" th:if="${itemsFound != null and itemsFound == 0}">
+        Телефонных номеров не найдено.
+    </div>
+
+    <div style="margin-top: 40px; padding-top: 15px; border-top: 1px dashed #ccc; text-align: center; font-size: 14px;">
+        <a href="/about" style="color: #888; text-decoration: none;">О приложении и авторе</a>
+    </div>
+</div>
+
+<script>
+    function copyResult() {
+        const block = document.getElementById('result-block');
+        if (!block) {
+            alert('Результат отсутствует.');
+            return;
+        }
+        // innerText сохраняет структуру строк (каждый <div> = отдельная строка),
+        // но вставляет \u00A0 (non-breaking space) из &nbsp; — убираем их,
+        // чтобы пустые строки-разделители скопировались как настоящие пустые строки.
+        const text = block.innerText.replace(/\u00A0/g, '').trim();
+        if (!text) {
+            alert('Результат пуст.');
+            return;
+        }
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Результат скопирован в буфер обмена.');
+        }).catch(err => {
+            alert('Не удалось скопировать: ' + err);
+        });
+    }
+</script>
+
+</body>
+</html>
